@@ -1,0 +1,135 @@
+# ============================================================
+# FINAL 4H-SiC LGAD CORE PHYSICS DECK 
+# Validation: Unified Sweep (Impact ON from 0V)
+# Features: 1e17 Gain Doping, Ballast Resistor, CV Re-enabled
+# ============================================================
+go victorydevice simflags="-256 -P 6"
+
+# ============================================================
+# 1. QUASI-1D MESH (User Coarsened)
+# ============================================================
+mesh WIDTH=1000000
+
+x.mesh location=0.0 spacing=1.0
+x.mesh location=1.0 spacing=1.0
+
+y.mesh location=0.00  spacing=0.003
+y.mesh location=0.10  spacing=0.003  
+y.mesh location=0.40  spacing=0.006  
+y.mesh location=1.00  spacing=0.03
+y.mesh location=5.00  spacing=0.20
+y.mesh location=25.0  spacing=0.75
+y.mesh location=29.0  spacing=0.50   
+y.mesh location=30.0  spacing=0.20   
+y.mesh location=32.0  spacing=0.20   
+y.mesh location=35.0  spacing=0.50   
+
+# ============================================================
+# 2. REGIONS & ELECTRODES
+# ============================================================
+region num=1 material='4H-SiC' y.min=0.00 y.max=35.00
+
+electrode name=anode top
+electrode name=cathode bottom
+
+# ============================================================
+# 3. DOPING 
+# ============================================================
+doping region=1 n.type uniform concentration=1.5e14 y.min=0.0 y.max=30.0
+doping region=1 n.type uniform concentration=5.0e18 y.min=30.0 y.max=32.0
+doping region=1 n.type uniform concentration=1.0e20 y.min=32.0 y.max=35.0
+
+# Gain Layer - Reduced to 1e17 to push breakdown past the 56V limit
+doping region=1 n.type gaussian concentration=1.0e17 y.char=0.15 peak=0.40
+
+# Anode Contact (P++) - Plateau to prevent depletion punch-through
+doping region=1 p.type uniform concentration=2.0e19 y.min=0.0 y.max=0.05
+doping region=1 p.type gaussian concentration=2.0e19 y.char=0.05 peak=0.05
+
+# ============================================================
+# 4. MATERIALS & CONTACTS
+# ============================================================
+contact name=anode 
+# Ballast resistor added to stabilize the Newton solver through the avalanche knee
+contact name=cathode resistance=1e5
+
+material material='4H-SiC' \
+    eg300=3.25 egalpha=9.06e-4 egbeta=2.03e3 \
+    affinity=3.13 nc300=1.66e19 nv300=3.3e19 \
+    permittivity=9.7 ni.min=1e-20 \
+    mun0=947 mup0=124 tmun=1.5 tmup=1.5 \
+    vsatn=2.2e7 vsatp=1.0e7 \
+    augn=5e-29 augp=9.9e-32
+
+mobility material='4H-SiC' \
+    mu2p.caug=124 ncritp.caug=1.76e19 \
+    alphap.caug=0 deltap.caug=0.34 gammap.caug=0 \
+    mu2n.caug=947 ncritn.caug=1.94e17 \
+    alphan.caug=0 deltan.caug=0.61 gamman.caug=0
+
+# ============================================================
+# 5. PHYSICS ACTIVATION
+# ============================================================
+# Explicit Hatakeyama Impact Model
+impact material='4H-SiC' anisotropic sic4h0001 e.side gradqfl e.min=1e5
+
+# Dual-Defect 1e13 Baseline Traps - tat.trap REMOVED for calibration
+trap material="4H-SiC" acceptor density=1e13 energy.level=0.63 degeneracy.factor=12 sign=1e-14 sigp=1e-14
+trap material="4H-SiC" donor density=5e12 energy.level=1.00 degeneracy.factor=2 sign=2e-14 sigp=2e-14
+trap material="4H-SiC" donor density=1e13 energy.level=1.70 degeneracy.factor=2 sign=2e-14 sigp=2e-14
+
+models material='4H-SiC' consrh auger analytic fldmob bgn.lindefelt fermidirac ni.fermi incomplete inc.two_level trap.tunnel impact
+
+# ============================================================
+# 6. INITIALIZATION 
+# ============================================================
+method newton trap maxtraps=15 itlimit=100 dvmax=1.0 norm.scaling.local weak=1
+solve init
+solve vanode=0 vcathode=0
+save outfile=lgad_eq.str
+
+# ============================================================
+# 7. C-V SWEEP (Re-enabled for depletion calibration)
+# ============================================================
+log outfile=lgad_cv_1MHz.log inport=anode outport=cathode y.param
+solve ac freq=1e6 port1=anode port2=cathode ports.only
+
+method newton trap maxtraps=20 itlimit=150 dvmax=5.0 norm.scaling.local weak=1 px.tol=1e-8 cx.tol=1e-8 pr.tol=1e-12 cr.tol=1e-12
+solve vstep=2.0 vfinal=100 name=cathode ac freq=1e6 port1=anode port2=cathode ports.only
+
+log off
+
+# ============================================================
+# 8. UNIFIED HIGH-VOLTAGE SWEEP
+# ============================================================
+# Reload equilibrium to ensure IV starts clean from 0V
+load infile=lgad_eq.str
+log outfile=lgad_fullrange_impact_iv.log
+
+# 8A. Micro-step runway (0V to 1V) 
+method newton trap maxtraps=25 itlimit=150 dvmax=0.1 norm.scaling.local weak=1 px.tol=1e-8 cx.tol=1e-8 pr.tol=1e-12 cr.tol=1e-12
+solve vcathode=0.1
+solve vcathode=0.5
+solve vcathode=1.0
+
+# 8B. Strict tight sweep with COMPLIANCE guarding ALL stages
+method newton trap maxtraps=25 itlimit=150 dvmax=5.0 norm.scaling.local weak=1 px.tol=1e-7 cx.tol=1e-7 pr.tol=1e-11 cr.tol=1e-11
+
+solve vstep=1.0 vfinal=100 name=cathode compliance=1e-6 cname=cathode
+solve vstep=2.0 vfinal=1500 name=cathode compliance=1e-6 cname=cathode
+
+log off
+save outfile=lgad_fullrange_near_breakdown.str
+
+# ============================================================
+# 9. EXTRACTION
+# ============================================================
+# CV Extraction
+extract init infile="lgad_cv_1MHz.log"
+extract name="1_over_C2" curve(v."cathode", 1/((c."cathode""anode")^2)) outfile="1_over_c2.dat"
+
+# IV Extraction
+extract init infile="lgad_fullrange_impact_iv.log"
+extract name="Vbd" x.val from curve(v."cathode", abs(i."anode")) where y.val=1e-6
+
+quit

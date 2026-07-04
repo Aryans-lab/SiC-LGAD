@@ -1,0 +1,85 @@
+go victorydevice
+
+TITLE "50um Silicon PiN diode - avalanche breakdown with Selberherr"
+
+# ==========================================
+# 1. MESH (20um x 50um)
+# ==========================================
+MESH WIDTH=1
+
+X.MESH LOCATION=0.0   SPACING=2.0
+X.MESH LOCATION=20.0  SPACING=2.0
+
+Y.MESH LOCATION=0.0   SPACING=0.05
+Y.MESH LOCATION=0.2   SPACING=0.05
+Y.MESH LOCATION=1.0   SPACING=0.10
+Y.MESH LOCATION=5.0   SPACING=0.50
+Y.MESH LOCATION=25.0  SPACING=0.50
+Y.MESH LOCATION=45.0  SPACING=0.50
+Y.MESH LOCATION=49.0  SPACING=0.10
+Y.MESH LOCATION=49.8  SPACING=0.05
+Y.MESH LOCATION=50.0  SPACING=0.05
+
+# ==========================================
+# 2. REGIONS & ELECTRODES
+# ==========================================
+REGION NUMBER=1 MATERIAL=SILICON X.MIN=0 X.MAX=20 Y.MIN=0 Y.MAX=50
+
+ELECTRODE NAME=ANODE   TOP
+ELECTRODE NAME=CATHODE BOTTOM
+
+# ==========================================
+# 3. DOPING
+# ==========================================
+DOPING REGION=1 UNIFORM P.TYPE CONC=1e19 Y.MIN=0.0  Y.MAX=1.0
+DOPING REGION=1 UNIFORM N.TYPE CONC=1e12 Y.MIN=1.0  Y.MAX=49.0
+DOPING REGION=1 UNIFORM N.TYPE CONC=1e19 Y.MIN=49.0 Y.MAX=50.0
+
+CONTACT NAME=ANODE
+CONTACT NAME=CATHODE
+
+# ==========================================
+# 4. PHYSICS & MODELS
+# ==========================================
+MODELS CONMOB FLDMOB SRH AUGER BGN FERMIDIRAC TEMPERATURE=300 PRINT
+
+# Explicit SRH seed current for avalanche
+MATERIAL MATERIAL=SILICON TAUN0=1e-7 TAUP0=1e-7
+
+# Selberherr model for Silicon impact ionization
+IMPACT SILICON SELB
+
+# ==========================================
+# 5. INITIALIZATION
+# ==========================================
+METHOD NEWTON CLIMIT=1e-4 MAXTRAPS=10
+
+# Save impact generation rates and electric field lines
+OUTPUT IMPACT E.LINES INAME=ANODE DELTAV=1 E.CRIT=1e4 ELEC.INTEGRAL
+
+SOLVE INIT
+SOLVE VANODE=0 VCATHODE=0
+SAVE OUTFILE=pin50_av_0000V.str
+
+# ==========================================
+# 6. REVERSE BIAS AVALANCHE SWEEP
+# ==========================================
+LOG OUTFILE=pin50_avalanche_iv.log
+
+SOLVE VCATHODE=1
+SOLVE VSTEP=10 VSTOP=300 NAME=CATHODE
+
+# Pre-breakdown bulk depletion
+SOLVE VSTEP=25 VSTOP=1000 NAME=CATHODE
+
+# Breakdown search using ionization integral
+SOLVE VSTEP=10 VSTOP=1300 NAME=CATHODE IONIZINT INAME=ANODE DELTAV=1 E.CRIT=1e4
+SOLVE VSTEP=5  VSTOP=1500 NAME=CATHODE IONIZINT INAME=ANODE DELTAV=1 E.CRIT=1e4
+
+# Fine sweep with compliance limit
+SOLVE VSTEP=2  VSTOP=1800 NAME=CATHODE IONIZINT INAME=ANODE DELTAV=1 E.CRIT=1e4 COMPLIANCE=1e-7 CNAME=CATHODE
+
+LOG OFF
+SAVE OUTFILE=pin50_avalanche_final.str
+
+quit

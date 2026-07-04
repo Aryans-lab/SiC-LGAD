@@ -1,0 +1,440 @@
+# ============================================================
+
+# FINAL 4H-SiC LGAD CORE PHYSICS DECK (VERSION 5)
+
+# Validation: onsemi 1x1 mm Target (Novotny et al. 2025)
+
+# Physics: HEPHY/Gaggl & Springer Dual-Defect 1e15 Fits
+
+# Features: Uniform JTE Mesh, 700V Punch-through Handling, ION.STOP
+
+# ============================================================
+
+go victorydevice simflags="-256 -P 20"
+
+
+
+# ============================================================
+
+# 1. MESH (Strictly uniform across JTE to kill 300-600V turbulence)
+
+# ============================================================
+
+mesh 
+
+
+
+# Ultra-smooth X-mesh: 0.5um spacing locked across the entire JTE and active area
+
+x.mesh location=0    spacing=5.0
+
+x.mesh location=30   spacing=2.0
+
+x.mesh location=40   spacing=0.5  # JTE Start
+
+x.mesh location=160  spacing=0.5  # JTE End
+
+x.mesh location=170  spacing=2.0
+
+x.mesh location=200  spacing=5.0
+
+
+
+# Y-mesh: Anchored at Gain Layer (y=2) and Substrate boundary (y=50)
+
+y.mesh location=0.00  spacing=0.02
+
+y.mesh location=0.20  spacing=0.02
+
+y.mesh location=0.70  spacing=0.05  # P++ ACTIVE PEAK 
+
+y.mesh location=2.00  spacing=0.10  # N-GAIN PEAK 
+
+y.mesh location=4.00  spacing=0.50
+
+y.mesh location=20.0  spacing=2.50
+
+y.mesh location=40.0  spacing=2.50
+
+y.mesh location=49.0  spacing=0.50
+
+y.mesh location=49.8  spacing=0.05  # SUBSTRATE PUNCH-THROUGH ANCHOR
+
+y.mesh location=50.0  spacing=0.02
+
+y.mesh location=50.2  spacing=0.05
+
+y.mesh location=55.0  spacing=1.00
+
+y.mesh location=75.0  spacing=5.00
+
+
+
+# ============================================================
+
+# 2. REGIONS & ELECTRODES
+
+# ============================================================
+
+region num=1 material='Air' x.min=0 x.max=200 y.min=-5 y.max=0.10
+
+region num=2 material='SiO2' x.min=0 x.max=60 y.min=0.10 y.max=0.20
+
+region num=4 material='SiO2' x.min=140 x.max=200 y.min=0.10 y.max=0.20
+
+region num=3 material='Aluminum' x.min=60 x.max=140 y.min=0.10 y.max=0.20
+
+region num=5 material='Aluminum' x.min=40 x.max=160 y.min=0.0 y.max=0.10
+
+
+
+region num=10 material='4H-SiC' x.min=0 x.max=200 y.min=0.20 y.max=50.00
+
+region num=11 material='4H-SiC' x.min=0 x.max=200 y.min=50.00 y.max=55.00
+
+region num=12 material='4H-SiC' x.min=0 x.max=200 y.min=55.00 y.max=75.00
+
+
+
+# Active + Gain
+
+region num=20 material='4H-SiC' x.min=65 x.max=135 y.min=0.20 y.max=3.60
+
+region num=21 material='4H-SiC' x.min=60 x.max=140 y.min=0.20 y.max=1.20
+
+
+
+# JTE
+
+region num=30 material='4H-SiC' x.min=40 x.max=60 y.min=0.20 y.max=1.00
+
+region num=31 material='4H-SiC' x.min=140 x.max=160 y.min=0.20 y.max=1.00
+
+
+
+electrode name=anode region=3
+
+electrode name=anode region=5
+
+electrode name=cathode bottom
+
+
+
+# ============================================================
+
+# 3. DOPING 
+
+# ============================================================
+
+doping region=10 n.type uniform concentration=1.5e14
+
+doping region=11 n.type gaussian concentration=5e19 y.char=1.40 peak=55.00
+
+doping region=12 n.type uniform concentration=1e20
+
+
+
+doping region=20 n.type gaussian concentration=3.0e17 y.char=0.60 peak=2.00
+
+doping region=21 p.type gaussian concentration=1e19 y.char=0.10 peak=0.70
+
+
+
+doping region=30 p.type uniform concentration=1.25e17
+
+doping region=31 p.type uniform concentration=1.25e17
+
+
+
+# ============================================================
+
+# 4. INTERFACE & MATERIALS
+
+# ============================================================
+
+interface s.i qf=1e11 s.n=10 s.p=10
+
+
+
+contact name=anode 
+
+contact name=cathode 
+
+
+
+material material='4H-SiC' \
+
+    eg300=3.25 egalpha=9.06e-4 egbeta=2.03e3 \
+
+    affinity=3.13 nc300=1.66e19 nv300=3.3e19 \
+
+    permittivity=9.7 ni.min=1e-20 \
+
+    mun0=947 mup0=124 tmun=1.5 tmup=1.5 \
+
+    vsatn=2.2e7 vsatp=1.0e7 \
+
+    taun0=1e-6 taup0=1e-6 \
+
+    augn=5e-29 augp=9.9e-32
+
+
+
+material material='SiO2' permittivity=3.9
+
+
+
+mobility material='4H-SiC' \
+
+    mu2p.caug=124 ncritp.caug=1.76e19 \
+
+    alphap.caug=0 deltap.caug=0.34 gammap.caug=0 \
+
+    mu2n.caug=947 ncritn.caug=1.94e17 \
+
+    alphan.caug=0 deltan.caug=0.61 gamman.caug=0
+
+
+
+# ============================================================
+
+# 5. INITIAL EQUILIBRIUM
+
+# ============================================================
+
+models material='4H-SiC' consrh auger analytic fldmob bgn.lindefelt
+
+method newton trap maxtraps=15 itlimit=100 dvmax=20.0 \
+
+    norm.scaling.local weak=1 climit=1e-4
+
+
+
+solve init
+
+solve vanode=0 vcathode=0
+
+save outfile=lgad50_000V_initial.str
+
+
+
+# ============================================================
+
+# 6. HEPHY/SPRINGER ALIGNED DEFECT PHYSICS
+
+# ============================================================
+
+# Note: Impact ionization models are removed here to prevent 0V solver errors.
+
+models material='4H-SiC' \
+
+    fermidirac ni.fermi \
+
+    incomplete inc.two_level \
+
+    bgn.lindefelt \
+
+    consrh auger \
+
+    analytic fldmob \
+
+    trap.tunnel
+
+
+
+# Defect 1: Z1/2 (Acceptor, 1e15 Best Fit per Gaggl)
+
+trap material="4H-SiC" acceptor density=1e15 energy.level=0.63 \
+
+    degeneracy.factor=12 sign=1e-14 sigp=1e-14 tat.trap
+
+
+
+# Defect 2: EH4 (Donor, Ec - 1.00 eV -> Ev + 2.25 eV)
+
+trap material="4H-SiC" donor density=5e14 energy.level=2.25 \
+
+    degeneracy.factor=2 sign=2e-14 sigp=2e-14 tat.trap
+
+
+
+# Defect 3: EH6/7 (Donor, Ec - 1.55 eV -> Ev + 1.70 eV)
+
+trap material="4H-SiC" donor density=1e15 energy.level=1.70 \
+
+    degeneracy.factor=2 sign=2e-14 sigp=2e-14 tat.trap
+
+
+
+solve previous
+
+save outfile=lgad_eq.str
+
+
+
+# ============================================================
+
+# 7. NO-IMPACT PRE-SWEEP (Isolates pure dark current)
+
+# ============================================================
+
+log outfile=lgad50_iv_noimpact.log
+
+
+
+solve vcathode=0.1 previous
+
+solve vcathode=1 vstep=1 vfinal=10 name=cathode previous
+
+
+
+# Sweeping through the 220V - 280V JTE turbulence zone
+
+# cx.tol and px.tol tightened to 1e-8 to reject numerical noise
+
+method newton trap maxtraps=20 itlimit=150 dvmax=2.0 \
+
+    norm.scaling.local weak=1 climit=1e-4 \
+
+    px.tol=1e-8 cx.tol=1e-8 pr.tol=1e-12 cr.tol=1e-12
+
+
+
+solve vstep=10 vfinal=200 name=cathode previous
+
+solve vstep=2.0 vfinal=300 name=cathode previous
+
+
+
+log off
+
+save outfile=lgad50_300V_noimpact.str
+
+
+
+# ============================================================
+
+# 8. IMPACT IONIZATION SWEEP WITH ION.STOP
+
+# ============================================================
+
+# Load 0V heavy physics state safely to prevent Delta V crashes
+
+load infile=lgad_eq.str
+
+
+
+# Cleanly turn on Impact Ionization for the final sweep
+
+models material='4H-SiC' impact
+
+impact material='4H-SiC' aniso sic4h0001 e.side gradqfl e.min=1e5
+
+
+
+log outfile=lgad_iv_impact.log
+
+
+
+# Tracing field lines for gain calculation
+
+output e.lines iname=anode deltav=0.5 e.crit=1e4
+
+
+
+solve vcathode=0.5 previous
+
+solve vstep=4.5 vfinal=5 name=cathode previous
+
+
+
+method newton trap maxtraps=15 itlimit=100 dvmax=25.0 \
+
+    norm.scaling.local weak=1 climit=1e-4 \
+
+    px.tol=1e-6 cx.tol=1e-6 pr.tol=1e-10 cr.tol=1e-10
+
+
+
+solve vstep=25.0 vfinal=200 name=cathode previous
+
+
+
+# Turbulence Zone 1 (220-280V) - Gain Layer Depletion
+
+method newton trap maxtraps=20 itlimit=150 dvmax=5.0 \
+
+    norm.scaling.local weak=1 climit=1e-4 \
+
+    px.tol=1e-8 cx.tol=1e-8 pr.tol=1e-12 cr.tol=1e-12
+
+solve vstep=5.0 vfinal=300 name=cathode previous
+
+
+
+# Fast traverse through bulk (300V - 680V) - Stabilized by ultra-smooth JTE mesh
+
+method newton trap maxtraps=15 itlimit=100 dvmax=25.0 \
+
+    norm.scaling.local weak=1 climit=1e-4 \
+
+    px.tol=1e-6 cx.tol=1e-6 pr.tol=1e-10 cr.tol=1e-10
+
+solve vstep=20.0 vfinal=680 name=cathode previous
+
+
+
+# Turbulence Zone 2 (680-720V) - N+ Substrate Hit (Fixes the 700V Spike)
+
+method newton trap maxtraps=20 itlimit=150 dvmax=2.0 \
+
+    norm.scaling.local weak=1 climit=1e-4 \
+
+    px.tol=1e-8 cx.tol=1e-8 pr.tol=1e-12 cr.tol=1e-12
+
+solve vstep=2.0 vfinal=720 name=cathode previous
+
+
+
+# Final Avalanche Approach (720V+) with ION.STOP
+
+method newton trap maxtraps=20 itlimit=150 dvmax=5.0 \
+
+    norm.scaling.local weak=1 climit=1e-4 \
+
+    px.tol=1e-6 cx.tol=1e-6 pr.tol=1e-12 cr.tol=1e-12
+
+
+
+# Your exact ION.STOP logic. Simulation safely self-terminates at breakdown.
+
+solve vstep=5.0 vfinal=1800 name=cathode previous \
+
+    ionizint iname=anode deltav=0.5 e.crit=1e4 \
+
+    ion.stop ion.crit=0.99 \
+
+    compliance=1e-4 cname=cathode
+
+
+
+log off
+
+save outfile=lgad50_fullrange_near_breakdown.str
+
+save outfile=lgad50_near_breakdown_elines.str
+
+
+
+# ============================================================
+
+# 9. EXTRACTION
+
+# ============================================================
+
+extract init infile="lgad_iv_impact.log"
+
+extract name="Vbd" x.val from curve(v."cathode", abs(i."anode")) where y.val=1e-6
+
+extract name="Electron_Integral" curve(v."cathode", probefile."max. elec. ion. int.") outfile="elec_integral.dat"
+

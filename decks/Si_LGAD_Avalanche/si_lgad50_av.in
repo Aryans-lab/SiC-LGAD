@@ -1,0 +1,134 @@
+go victorydevice
+
+TITLE "Final 50um Silicon LGAD: CV, no-impact IV, and avalanche breakdown"
+
+# ==========================================
+# FINAL CLEAN DECK: 50um Silicon LGAD (UFSD)
+# Expected:
+#   - Depletion in C-V: ~70-90 V
+#   - Avalanche breakdown: ~850-950 V
+# ==========================================
+
+# ==========================================
+# 1. MESH (20um x 50um, 1000um implied width)
+# ==========================================
+MESH WIDTH=1000
+
+X.MESH LOCATION=0.0   SPACING=1.0
+X.MESH LOCATION=20.0  SPACING=1.0
+
+Y.MESH LOCATION=0.0    SPACING=0.005
+Y.MESH LOCATION=0.10   SPACING=0.005
+Y.MESH LOCATION=0.20   SPACING=0.005
+Y.MESH LOCATION=0.25   SPACING=0.005
+Y.MESH LOCATION=0.35   SPACING=0.005
+Y.MESH LOCATION=0.70   SPACING=0.020
+Y.MESH LOCATION=1.20   SPACING=0.030
+Y.MESH LOCATION=2.00   SPACING=0.050
+Y.MESH LOCATION=5.00   SPACING=0.200
+Y.MESH LOCATION=25.00  SPACING=0.500
+Y.MESH LOCATION=45.00  SPACING=0.500
+Y.MESH LOCATION=49.00  SPACING=0.100
+Y.MESH LOCATION=49.80  SPACING=0.050
+Y.MESH LOCATION=50.00  SPACING=0.020
+
+# ==========================================
+# 2. REGIONS & ELECTRODES
+# ==========================================
+REGION NUMBER=1 MATERIAL=SILICON X.MIN=0 X.MAX=20 Y.MIN=0 Y.MAX=50
+
+ELECTRODE NAME=ANODE   TOP
+ELECTRODE NAME=CATHODE BOTTOM
+
+# ==========================================
+# 3. DOPING
+# ==========================================
+DOPING REGION=1 UNIFORM N.TYPE CONC=4e13 \
+       X.MIN=0 X.MAX=20 Y.MIN=0.20 Y.MAX=49.00
+
+DOPING REGION=1 UNIFORM N.TYPE CONC=1e19 \
+       X.MIN=0 X.MAX=20 Y.MIN=49.00 Y.MAX=50.00
+
+DOPING REGION=1 UNIFORM P.TYPE CONC=1e19 \
+       X.MIN=0 X.MAX=20 Y.MIN=0.00 Y.MAX=0.20
+
+DOPING REGION=1 GAUSSIAN P.TYPE CONC=8e16 Y.CHAR=0.18 \
+       X.MIN=0 X.MAX=20 Y.MIN=0.25 Y.MAX=0.35
+
+CONTACT NAME=ANODE
+CONTACT NAME=CATHODE
+
+# ==========================================
+# 4. PHYSICS & MODELS
+# ==========================================
+MODELS CONMOB FLDMOB SRH AUGER BGN FERMIDIRAC TEMPERATURE=300 PRINT
+
+MATERIAL MATERIAL=SILICON TAUN0=1e-7 TAUP0=1e-7
+
+METHOD NEWTON NORM.SCALING.LOCAL
+
+# ==========================================
+# 5. INITIALIZATION
+# ==========================================
+SOLVE INIT
+SOLVE VANODE=0 VCATHODE=0
+SAVE OUTFILE=lgad50_000V_initial.str
+
+# ==========================================
+# 6. C-V SWEEP (1 MHz)
+# ==========================================
+LOG OUTFILE=lgad50_cv_1MHz.log INPORT=ANODE OUTPORT=CATHODE Y.PARAM
+
+SOLVE AC FREQ=1e6 PORT1=ANODE PORT2=CATHODE PORTS.ONLY
+SOLVE VSTEP=1 VFINAL=20 NAME=CATHODE AC FREQ=1e6 PORT1=ANODE PORT2=CATHODE PORTS.ONLY
+SOLVE VSTEP=2 VFINAL=120 NAME=CATHODE AC FREQ=1e6 PORT1=ANODE PORT2=CATHODE PORTS.ONLY
+
+LOG OFF
+SAVE OUTFILE=lgad50_120V_cv_done.str
+
+# ==========================================
+# 7. RESET & NO-IMPACT I-V SWEEP
+# ==========================================
+SOLVE VCATHODE=0
+SAVE OUTFILE=lgad50_reset_000V.str
+
+LOG OUTFILE=lgad50_iv_noimpact.log
+
+SOLVE VCATHODE=0.5
+SOLVE VSTEP=0.5 VFINAL=5   NAME=CATHODE
+SOLVE VSTEP=2.0 VFINAL=40  NAME=CATHODE
+SOLVE VSTEP=5.0 VFINAL=150 NAME=CATHODE
+SOLVE VSTEP=10  VFINAL=250 NAME=CATHODE
+
+LOG OFF
+SAVE OUTFILE=lgad50_250V_noimpact.str
+
+# ==========================================
+# 8. FULL-RANGE AVALANCHE SWEEP
+# ==========================================
+SOLVE VCATHODE=0
+
+IMPACT MATERIAL=SILICON SELBERHERR P.MIN=0.0 E.MIN=10.0
+
+LOG OUTFILE=lgad50_fullrange_impact_iv.log
+
+SOLVE VCATHODE=0.5 IONIZINT INAME=ANODE DELTAV=1 E.CRIT=1e4
+SOLVE VSTEP=0.5 VFINAL=20 NAME=CATHODE IONIZINT INAME=ANODE DELTAV=1 E.CRIT=1e4
+SOLVE VSTEP=2 VFINAL=120 NAME=CATHODE IONIZINT INAME=ANODE DELTAV=1 E.CRIT=1e4
+SOLVE VSTEP=10 VFINAL=500 NAME=CATHODE IONIZINT INAME=ANODE DELTAV=1 E.CRIT=1e4
+SOLVE VSTEP=5 VFINAL=750 NAME=CATHODE IONIZINT INAME=ANODE DELTAV=1 E.CRIT=1e4
+
+# Fine sweep into breakdown with compliance and stop criteria
+SOLVE VSTEP=1 VFINAL=950 NAME=CATHODE \
+      IONIZINT INAME=ANODE DELTAV=1 E.CRIT=1e4 \
+      ION.STOP ION.CRIT=0.99 \
+      COMPLIANCE=1e-5 CNAME=CATHODE
+
+LOG OFF
+SAVE OUTFILE=lgad50_fullrange_near_breakdown.str
+
+# ==========================================
+# 9. OUTPUT
+# ==========================================
+OUTPUT E.LINES INAME=ANODE DELTAV=1 E.CRIT=1e4
+SAVE OUTFILE=lgad50_near_breakdown_elines.str

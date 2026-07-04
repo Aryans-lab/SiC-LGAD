@@ -1,0 +1,120 @@
+go victorydevice simflags="-P 4"
+
+TITLE PRIMITIVE 4H-SiC LGAD - no JTE, no field plate, edge-field problem demo
+
+# ============================================================
+# PURPOSE: Intentionally primitive comparison structure.
+# Features: Same active p++ pad, gain layer, and epi stack. 
+# Missing: No JTE, No guard ring, No field plate overhang.
+# Expected: Electric field crowds near the active pad/gain-layer edge.
+# ============================================================
+
+# ============================================================
+# 1. MESH
+# ============================================================
+mesh space.mult=1.0
+
+# Fine mesh around active pad and gain-layer edges.
+x.mesh location=0     spacing=10
+x.mesh location=100   spacing=5
+x.mesh location=200   spacing=2
+x.mesh location=240   spacing=0.5
+x.mesh location=250   spacing=0.25
+x.mesh location=275   spacing=0.25
+x.mesh location=320   spacing=1.0
+x.mesh location=465   spacing=2.0
+x.mesh location=610   spacing=1.0
+x.mesh location=655   spacing=0.25
+x.mesh location=680   spacing=0.25
+x.mesh location=690   spacing=0.5
+x.mesh location=730   spacing=2
+x.mesh location=830   spacing=5
+x.mesh location=930   spacing=10
+
+y.mesh location=0.00   spacing=0.02
+y.mesh location=0.10   spacing=0.02
+y.mesh location=0.20   spacing=0.02
+y.mesh location=0.60   spacing=0.04
+y.mesh location=1.20   spacing=0.04
+y.mesh location=2.00   spacing=0.08
+y.mesh location=3.60   spacing=0.10
+y.mesh location=5.20   spacing=0.25
+y.mesh location=10.20  spacing=1.0
+y.mesh location=25.20  spacing=2.0
+y.mesh location=50.20  spacing=0.5
+y.mesh location=55.20  spacing=0.5
+y.mesh location=75.20  spacing=2.0
+
+# ============================================================
+# 2. REGIONS & ELECTRODES
+# ============================================================
+region num=1 material=Air name=air
+region num=2 material=SiO2 x.min=0 x.max=930 y.min=0.10 y.max=0.20 name=oxide
+
+# Primitive metal: exactly above p++ active pad. No field-plate overhang.
+region num=3 material=Aluminum x.min=250 x.max=680 y.min=0.00 y.max=0.10 name=anode_metal_no_fieldplate
+
+region num=10 material=4H-SiC x.min=0 x.max=930 y.min=0.20 y.max=50.20 name=n_drift_epi
+region num=11 material=4H-SiC x.min=0 x.max=930 y.min=50.20 y.max=55.20 name=n_buffer
+region num=12 material=4H-SiC x.min=0 x.max=930 y.min=55.20 y.max=75.20 name=n_substrate
+
+# n-type gain layer & p++ active anode implant
+region num=20 material=4H-SiC x.min=275 x.max=655 y.min=0.20 y.max=3.60 name=n_gain_layer
+region num=21 material=4H-SiC x.min=250 x.max=680 y.min=0.20 y.max=1.20 name=pplus_active
+
+electrode name=anode region=3
+electrode name=cathode bottom
+
+# ============================================================
+# 3. DOPING
+# ============================================================
+material material=4H-SiC zeta=0 theta=0
+
+doping nitrogen uniform concentration=1.5e14 region=10
+doping nitrogen gaussian concentration=5.0e19 region=11 y.characteristic=1.40 peak=55.20
+doping nitrogen uniform concentration=1.0e20 region=12
+doping nitrogen gaussian concentration=1.15e17 region=20 y.characteristic=0.65 peak=2.00
+doping aluminum gaussian concentration=1.0e19 region=21 y.characteristic=0.20 peak=0.70
+
+# ============================================================
+# 4. PHYSICS & MODELS
+# ============================================================
+models srh conmob fldmob fermi incomplete print
+
+impact selb material=4H-SiC \
+    an1=2.8e6  bn1=20.7e6 \
+    ap1=2.5e6  bp1=12.1e6 \
+    betan=1.0 betap=1.0 print
+
+method newton carriers=2 norm.scaling.local climit=1e-4
+
+# ============================================================
+# 5. INITIALIZATION & SWEEP
+# ============================================================
+solve init
+structure outfile=PRIMITIVE_eq.str
+
+log outf=PRIMITIVE_IV.log
+
+solve previous vcathode=0.1
+structure outfile=PRIMITIVE_0p1V.str
+
+solve previous vcathode=1.0
+structure outfile=PRIMITIVE_1V.str
+
+solve previous vcathode=5.0
+structure outfile=PRIMITIVE_5V.str
+
+solve previous vcathode=10.0
+structure outfile=PRIMITIVE_10V.str
+
+solve previous vcathode=10.0 vstep=10.0 vfinal=100.0 name=cathode
+structure outfile=PRIMITIVE_100V.str
+
+solve previous vcathode=100.0 vstep=10.0 vfinal=300.0 name=cathode
+structure outfile=PRIMITIVE_300V.str
+
+solve previous vcathode=300.0 vstep=20.0 vfinal=600.0 name=cathode
+structure outfile=PRIMITIVE_600V.str
+
+quit

@@ -1,0 +1,365 @@
+go victorydevice
+
+TITLE "CMS-ETL-style 4H-SiC PIN 50um pad, 248K, final IV and II deck"
+
+# =============================================================================
+# FILE:
+#   cmsETL_sic4h_PIN50um_248K_final_v1.in
+#
+# DEVICE INTENT:
+#   A single-pad, CMS-ETL-size, 4H-SiC PIN reference detector cell.
+#
+#   This is the no-gain-layer companion to:
+#      cmsETL_sic4h_LGAD50um_248K_final_v1.in
+#
+#   It uses the same pad size, temperature, mesh philosophy, physics stack,
+#   and output structure as the LGAD deck, but removes the N+ gain layer.
+#
+# IMPORTANT:
+#   CMS Phase-2 ETL uses silicon LGAD sensors.  This deck is a CMS-ETL-style
+#   4H-SiC PIN reference study: CMS-like pad and operating temperature,
+#   combined with published 4H-SiC PiN/LGAD epi-stack information.
+#
+# PRIMARY OUTPUTS:
+#   cmsETL_sic4hPIN50_248K_darkImpactIV_final.log
+#       Dark reverse I-V with impact generation ON and current compliance.
+#
+#   cmsETL_sic4hPIN50_248K_ionIntegral_final.log
+#       Electron/Hole ionization-integral curves vs bias.
+#
+#   cmsETL_sic4hPIN50_248K_uvTCT_IV_final.log
+#       Optional UV-TCT-style carrier-injection I-V, not dark leakage.
+#
+# TEMPERATURE:
+#   248.15 K = -25 deg C.
+#
+# PAD GEOMETRY:
+#   x = 0 ... 1300 um
+#   z = 0 ... 1300 um
+#   y = 0 ... 52.30 um
+#
+# LAYER STACK:
+#   y = 0.00  - 0.30  um : P++ Al anode / implanted top contact layer
+#   y = 0.30  - 50.30 um : N-  nitrogen drift / active bulk
+#   y = 50.30 - 52.30 um : N++ nitrogen substrate/contact layer
+#
+# PARAMETER SOURCE SUMMARY:
+#   - ETL-like pad size and temperature:
+#       1.3 mm x 1.3 mm pad, 50 um active timing detector scale,
+#       cold operation below about -25 C.
+#
+#   - 4H-SiC PiN stack:
+#       Published 4H-SiC LGAD/PiN characterization reports a PiN diode that
+#       differs from the LGAD by absence of the gain layer.  The reported
+#       common layers are P++ contact layer, N- drift, and N+ buffer/substrate.
+#
+#   - Drift doping:
+#       Published C-V extraction gives the 4H-SiC PiN drift concentration
+#       around 4.86e14 cm-3.  This deck uses that value.
+#
+#   - Top P++:
+#       Published epi-stack reports 0.3 um P++ contact layer at 1e20 cm-3.
+#       This deck uses 1e20 cm-3 for the PIN reference.
+#
+#   - Bottom N++:
+#       Published epi-stack reports N+ buffer/substrate >=5e18 cm-3.
+#       This deck uses 1e19 cm-3 as the high-conductivity contact layer.
+#
+# LIMITATIONS NOT HIDDEN:
+#   1. No explicit JTE/guard ring.  Exact edge-termination mask is not specified.
+#      This is a pad-center vertical bulk model, not an edge-breakdown model.
+#   2. No radiation traps.  Radiation damage must use a separate calibrated
+#      trap model after the pre-irradiation baseline is validated.
+#   3. Ideal ohmic contacts.  Do not invent contact resistivity without data.
+#   4. Uniform box doping.  A process-realistic profile requires SIMS/process
+#      import, not guessed Gaussian implants.
+# =============================================================================
+
+
+# =============================================================================
+# 1. 3D PRISMATIC MESH
+# =============================================================================
+# Full ETL-style pad area, coarse laterally.  This avoids fake edge physics while
+# keeping real pad current scale.
+
+mesh prism verbosity=2
+
+# Lateral pad dimensions: 1.3 mm x 1.3 mm.
+x.mesh location=0.0    spacing=650.0
+x.mesh location=650.0  spacing=650.0
+x.mesh location=1300.0 spacing=650.0
+
+z.mesh location=0.0    spacing=650.0
+z.mesh location=650.0  spacing=650.0
+z.mesh location=1300.0 spacing=650.0
+
+# Vertical mesh.
+# Fine at the P++/N- junction and N-/N++ transition.
+# Coarser in the quasi-uniform drift region.
+y.mesh location=0.00  spacing=0.030
+y.mesh location=0.20  spacing=0.020
+y.mesh location=0.30  spacing=0.010
+y.mesh location=0.50  spacing=0.030
+y.mesh location=1.00  spacing=0.100
+y.mesh location=2.00  spacing=0.200
+y.mesh location=5.00  spacing=0.500
+y.mesh location=10.0  spacing=1.000
+y.mesh location=20.0  spacing=1.000
+y.mesh location=35.0  spacing=1.000
+y.mesh location=45.0  spacing=0.500
+y.mesh location=50.0  spacing=0.200
+y.mesh location=50.30 spacing=0.050
+y.mesh location=51.0  spacing=0.100
+y.mesh location=52.30 spacing=0.200
+
+
+# =============================================================================
+# 2. REGION, ELECTRODES, CONTACTS
+# =============================================================================
+
+region number=1 material=4H-SiC \
+       x.min=0.0 x.max=1300.0 \
+       y.min=0.0 y.max=52.30 \
+       z.min=0.0 z.max=1300.0
+
+electrode name=anode   top
+electrode name=cathode bottom
+
+# Ideal ohmic contacts for the baseline.
+contact name=anode
+contact name=cathode
+
+
+# =============================================================================
+# 3. DOPING: P++ / N- BULK / N++ SUBSTRATE
+# =============================================================================
+# Species doping is used for incomplete-ionization bookkeeping:
+#   aluminum = acceptor
+#   nitrogen = donor
+
+# P++ top contact/anode, aluminum.
+doping aluminum region=1 uniform concentration=1.0e20 \
+       y.min=0.00 y.max=0.30
+
+# N- drift/active bulk, nitrogen.
+doping nitrogen region=1 uniform concentration=4.86e14 \
+       y.min=0.30 y.max=50.30
+
+# N++ bottom substrate/contact, nitrogen.
+doping nitrogen region=1 uniform concentration=1.0e19 \
+       y.min=50.30 y.max=52.30
+
+
+# =============================================================================
+# 4. MATERIAL PARAMETERS
+# =============================================================================
+# Explicit SRH lifetimes.  These define generation/recombination lifetime and
+# make the leakage model reproducible.
+#
+# Incomplete ionization:
+#   Do not override EDB/EAB with a single-level approximation.  With INC.ION,
+#   Victory uses its 4H-SiC two-level incomplete-ionization model.
+
+material material=4H-SiC \
+         taun0=1.0e-7 taup0=1.0e-7
+
+
+# =============================================================================
+# 5. PHYSICAL MODELS
+# =============================================================================
+# SRH        : depletion-region generation/recombination.
+# AUGER      : high-doping recombination contribution.
+# BGN        : bandgap narrowing in highly doped P++/N++ layers.
+# ANALYTIC   : Caughey-Thomas concentration-dependent mobility.
+#              Do not use CONMOB for 4H-SiC; CONMOB is Si lookup-table based.
+# FLDMOB     : high-field velocity-saturation mobility.
+# FERMIDIRAC : degenerate statistics for P++/N++ layers.
+# INC.ION    : incomplete ionization for Al/N dopants in 4H-SiC.
+# TEMPERATURE=248.15:
+#              -25 C, ETL-like cold operation.
+
+models material=4H-SiC \
+       srh auger bgn analytic fldmob fermidirac inc.ion \
+       temperature=248.15 print
+
+
+# =============================================================================
+# 6. NUMERICAL METHOD
+# =============================================================================
+
+method newton \
+       norm.scaling.local \
+       climit=1.0e-4 \
+       maxtraps=20 atrap=0.5 \
+       ir.toler=1.0e-16 ix.toler=1.0e-4 i.min.iterations=9 \
+       use.partial.conc.for.inc.ion
+
+
+# =============================================================================
+# 7. STANDARD STRUCTURE OUTPUTS
+# =============================================================================
+
+output e.field ex.field ey.field ez.field \
+       j.total j.electron j.hole \
+       j.electron.drift j.hole.drift \
+       j.electron.diffusion j.hole.diffusion \
+       e.mobility h.mobility \
+       e.velocity h.velocity \
+       recomb u.srh u.auger \
+       qfn qfp impact photogen
+
+
+# =============================================================================
+# 8. EQUILIBRIUM
+# =============================================================================
+
+solve initial
+solve previous vanode=0 vcathode=0 print
+
+save outf=cmsETL_sic4hPIN50_248K_eq_final.str
+
+
+# =============================================================================
+# 9. DARK IV WITH IMPACT GENERATION ON
+# =============================================================================
+# Closest analogue to the silicon avalanche I-V, but for a dark 4H-SiC PIN.
+# Because this has no gain layer, breakdown may be higher and current may remain
+# smaller than the LGAD case until high field is reached.
+
+impact material=4H-SiC anisotropic sic4h0001 print
+
+log outf=cmsETL_sic4hPIN50_248K_darkImpactIV_final.log no.trap
+
+solve previous vcathode=1 print
+
+solve previous vstep=5  vstop=100  name=cathode print
+save outf=cmsETL_sic4hPIN50_248K_100V_final.str
+
+solve previous vstep=10 vstop=300  name=cathode print
+save outf=cmsETL_sic4hPIN50_248K_300V_final.str
+
+solve previous vstep=25 vstop=800  name=cathode \
+      compliance=1.0e-6 cname=cathode print
+save outf=cmsETL_sic4hPIN50_248K_800V_final.str
+
+solve previous vstep=25 vstop=1500 name=cathode \
+      compliance=1.0e-6 cname=cathode print
+save outf=cmsETL_sic4hPIN50_248K_1500V_final.str
+
+solve previous vstep=50 vstop=3000 name=cathode \
+      compliance=1.0e-6 cname=cathode print
+save outf=cmsETL_sic4hPIN50_248K_3000V_final.str
+
+solve previous vstep=50 vstop=5000 name=cathode \
+      compliance=1.0e-6 cname=cathode print
+
+save outf=cmsETL_sic4hPIN50_248K_darkImpactIV_stop_final.str
+
+log off
+
+
+# =============================================================================
+# 10. IONIZATION-INTEGRAL BREAKDOWN MAP
+# =============================================================================
+# Physical breakdown diagnostic.
+# Plot Electron Ionization Integral and Hole Ionization Integral vs Cathode Voltage.
+# Breakdown criterion:
+#   max(Electron II, Hole II) = 1.
+
+load infile=cmsETL_sic4hPIN50_248K_800V_final.str
+
+impact material=4H-SiC anisotropic sic4h0001 ionizint print
+
+log outf=cmsETL_sic4hPIN50_248K_ionIntegral_final.log no.trap
+
+solve previous vstep=50 vstop=2000 name=cathode \
+      ionizint iname=anode deltav=1.0 e.crit=1.0e4 print
+
+solve previous vstep=25 vstop=3500 name=cathode \
+      ionizint iname=anode deltav=1.0 e.crit=1.0e4 print
+
+solve previous vstep=10 vstop=5000 name=cathode \
+      ionizint iname=anode deltav=1.0 e.crit=1.0e4 print
+
+save outf=cmsETL_sic4hPIN50_248K_afterII_final.str
+
+log off
+
+
+# =============================================================================
+# 11. IONIZATION-INTEGRAL STOP CONFIRMATION
+# =============================================================================
+
+load infile=cmsETL_sic4hPIN50_248K_800V_final.str
+
+impact material=4H-SiC anisotropic sic4h0001 ionizint print
+
+log outf=cmsETL_sic4hPIN50_248K_ionStop_final.log no.trap
+
+solve previous vstep=25 vstop=5000 name=cathode \
+      ionizint iname=anode deltav=1.0 e.crit=1.0e4 \
+      ion.stop ion.crit=0.999 print
+
+save outf=cmsETL_sic4hPIN50_248K_ionStop_final.str
+
+log off
+
+
+# =============================================================================
+# 12. OPTIONAL UV-TCT SEEDED PIN IV
+# =============================================================================
+# This is not dark IV.  It represents a UV-TCT-like carrier-injection response
+# curve for comparing PIN charge collection with the LGAD seeded response.
+
+beam number=1 \
+     x.origin=650.0 y.origin=-10.0 z.origin=650.0 \
+     phi=90 theta=0 \
+     xmin=-650.0 xmax=650.0 zmin=-650.0 zmax=650.0 \
+     wavelength=0.365 quantum.eff=1.0 verbose
+
+load infile=cmsETL_sic4hPIN50_248K_eq_final.str
+
+impact material=4H-SiC anisotropic sic4h0001 print
+
+log outf=cmsETL_sic4hPIN50_248K_uvTCT_IV_final.log no.trap
+
+solve previous vanode=0 vcathode=0 b1=1.0e-7 print
+save outf=cmsETL_sic4hPIN50_248K_uvTCT_0V_final.str
+
+solve previous vstep=5  vstop=100 name=cathode \
+      b1=1.0e-7 print
+
+solve previous vstep=10 vstop=300 name=cathode \
+      b1=1.0e-7 print
+
+solve previous vstep=25 vstop=800 name=cathode \
+      b1=1.0e-7 compliance=1.0e-6 cname=cathode print
+
+solve previous vstep=25 vstop=1500 name=cathode \
+      b1=1.0e-7 compliance=1.0e-6 cname=cathode print
+
+solve previous vstep=50 vstop=5000 name=cathode \
+      b1=1.0e-7 compliance=1.0e-6 cname=cathode print
+
+save outf=cmsETL_sic4hPIN50_248K_uvTCT_IV_stop_final.str
+
+log off
+
+
+# =============================================================================
+# 13. FIELD-LINE STRUCTURE OUTPUTS
+# =============================================================================
+# Do not put ELEC.INTEGRAL and HOLE.INTEGRAL in the same OUTPUT statement.
+
+load infile=cmsETL_sic4hPIN50_248K_ionStop_final.str
+
+output e.field impact e.lines iname=anode deltav=1.0 e.crit=1.0e4
+save outf=cmsETL_sic4hPIN50_248K_ionLines_max_final.str
+
+output e.field impact e.lines iname=anode deltav=1.0 e.crit=1.0e4 elec.integral
+save outf=cmsETL_sic4hPIN50_248K_ionLines_elec_final.str
+
+output e.field impact e.lines iname=anode deltav=1.0 e.crit=1.0e4 hole.integral
+save outf=cmsETL_sic4hPIN50_248K_ionLines_hole_final.str
+
+quit

@@ -1,0 +1,88 @@
+go victorydevice simflags="-256 -P 6"
+
+TITLE "4H-SiC LGAD 273.15K production breakdown diagnostic"
+
+# ==========================================
+# 1. MESH
+# ==========================================
+mesh width=1
+
+# Simplified 1D-like strip for fast iteration
+x.mesh loc=0.0 spac=0.5
+x.mesh loc=1.0 spac=0.5
+
+# Vertical junctions refined to sub-nm scales
+y.mesh loc=0.00  spac=0.020
+y.mesh loc=0.20  spac=0.010
+y.mesh loc=0.28  spac=0.003
+y.mesh loc=0.30  spac=0.002
+y.mesh loc=0.32  spac=0.003
+y.mesh loc=0.50  spac=0.005
+y.mesh loc=0.78  spac=0.003
+y.mesh loc=0.80  spac=0.002
+y.mesh loc=0.82  spac=0.005
+y.mesh loc=1.00  spac=0.020
+y.mesh loc=50.0  spac=0.200
+y.mesh loc=52.8  spac=0.100
+
+region num=1 material=4H-SiC
+
+electrode name=anode top
+electrode name=cathode bottom
+
+# ==========================================
+# 2. DOPING
+# ==========================================
+doping uniform p.type conc=1.0e19 y.min=0.00 y.max=0.30
+doping uniform n.type conc=2.0e17 y.min=0.30 y.max=0.80
+doping uniform n.type conc=1.0e15 y.min=0.80 y.max=50.8
+doping uniform n.type conc=1.0e19 y.min=50.8 y.max=52.8
+
+contact name=anode
+contact name=cathode
+
+# ==========================================
+# 3. PHYSICS
+# ==========================================
+material material=4H-SiC taun0=5.0e-7 taup0=1.0e-7
+models fermidirac incomplete mob.incompl srh auger bgn analytic fldmob temperature=273.15 print
+
+# Anisotropic impact ionization (Hatakeyama)
+impact material=4H-SiC anisotropic sic4h0001 ionizint print
+
+method newton norm.scaling.local climit=1e-4 maxtraps=12 atrap=0.5 use.partial.conc.for.inc.ion
+
+# ==========================================
+# 4. INITIALIZATION
+# ==========================================
+output impact recomb u.srh u.auger e.mobility h.mobility e.velocity h.velocity qfn qfp e.field e.lines iname=anode deltav=1.0 e.crit=1e4
+
+solve init
+solve vanode=0 vcathode=0
+save outf=lgad273_eq.str
+
+# ==========================================
+# 5. TERMINAL I-V (Clean Log)
+# ==========================================
+log outf=lgad273_iv.log no.trap
+
+solve vcathode=1
+solve vstep=10 vstop=100 name=cathode
+solve vstep=50 vstop=1000 name=cathode
+solve vstep=100 vstop=3000 name=cathode
+solve vstep=50 vstop=4500 name=cathode
+
+log off
+
+# ==========================================
+# 6. BREAKDOWN SCAN (II Integral)
+# ==========================================
+log outf=lgad273_ii_scan.log no.trap
+
+solve vstep=20 vstop=5500 name=cathode ionizint iname=anode deltav=1.0 e.crit=1e4
+solve vstep=10 vstop=6500 name=cathode ionizint iname=anode deltav=1.0 e.crit=1e4
+
+log off
+save outf=lgad273_ii_final.str
+
+quit

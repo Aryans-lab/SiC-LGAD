@@ -1,0 +1,211 @@
+# =============================================================
+# 4H-SiC LGAD with JTE — THE ONSEMI GOLD STANDARD 
+# Validation: arXiv:2503.07490 (Novotny et al., 2025)
+# Precision: 256-bit | Speed-Optimized
+# =============================================================
+go victorydevice simflags="-256 -P 20"
+
+# =============================================================
+# MESH — ALIGNED TO DOPING PEAKS
+# =============================================================
+mesh
+
+x.mesh location=0    spacing=5
+x.mesh location=30   spacing=3
+x.mesh location=38   spacing=1.5
+x.mesh location=42   spacing=0.8
+x.mesh location=45   spacing=0.4
+x.mesh location=50   spacing=0.3
+x.mesh location=55   spacing=0.2
+x.mesh location=58   spacing=0.15
+x.mesh location=60   spacing=0.15
+x.mesh location=62   spacing=0.2
+x.mesh location=65   spacing=0.3
+x.mesh location=70   spacing=0.6
+x.mesh location=75   spacing=1.2
+x.mesh location=80   spacing=1.7
+x.mesh location=100  spacing=2.5
+x.mesh location=120  spacing=2.5
+x.mesh location=130  spacing=1.5
+x.mesh location=135  spacing=0.8
+x.mesh location=138  spacing=0.4
+x.mesh location=140  spacing=0.15
+x.mesh location=142  spacing=0.15
+x.mesh location=145  spacing=0.2
+x.mesh location=150  spacing=0.3
+x.mesh location=155  spacing=0.5
+x.mesh location=158  spacing=0.8
+x.mesh location=162  spacing=1.5
+x.mesh location=170  spacing=2.5
+x.mesh location=200  spacing=5
+
+y.mesh location=0     spacing=0.08
+y.mesh location=0.20  spacing=0.08
+y.mesh location=0.50  spacing=0.15
+y.mesh location=0.70  spacing=0.15  # P++ ACTIVE PEAK
+y.mesh location=1.00  spacing=0.25
+y.mesh location=2.00  spacing=0.45  # N-GAIN PEAK
+y.mesh location=3.00  spacing=0.85
+y.mesh location=5.00  spacing=1.75
+y.mesh location=10.0  spacing=2.75
+y.mesh location=20.0  spacing=4.5
+y.mesh location=35.0  spacing=6.00
+y.mesh location=45.0  spacing=6.00
+y.mesh location=48.0  spacing=3.50
+y.mesh location=50.0  spacing=0.75
+y.mesh location=50.20 spacing=0.30
+y.mesh location=50.50 spacing=0.45
+y.mesh location=51.0  spacing=0.70
+y.mesh location=52.0  spacing=1.50
+y.mesh location=55.20 spacing=2.00
+y.mesh location=58.0  spacing=2.75
+y.mesh location=60.0  spacing=3.50
+y.mesh location=75.20 spacing=6.00
+
+# =============================================================
+# REGIONS
+# =============================================================
+region num=1 material='Air' x.min=0 x.max=200 y.min=-5 y.max=0.10
+region num=2 material='SiO2' x.min=0 x.max=60 y.min=0.10 y.max=0.20
+region num=4 material='SiO2' x.min=140 x.max=200 y.min=0.10 y.max=0.20
+region num=3 material='Aluminum' x.min=60 x.max=140 y.min=0.10 y.max=0.20
+region num=5 material='Aluminum' x.min=40 x.max=160 y.min=0.0 y.max=0.10
+region num=10 material='4H-SiC' x.min=0 x.max=200 y.min=0.20 y.max=50.20
+region num=11 material='4H-SiC' x.min=0 x.max=200 y.min=50.20 y.max=55.20
+region num=12 material='4H-SiC' x.min=0 x.max=200 y.min=55.20 y.max=75.20
+region num=20 material='4H-SiC' x.min=65 x.max=135 y.min=0.20 y.max=3.60
+region num=21 material='4H-SiC' x.min=60 x.max=140 y.min=0.20 y.max=1.20
+region num=30 material='4H-SiC' x.min=40 x.max=60 y.min=0.20 y.max=1.00
+region num=31 material='4H-SiC' x.min=140 x.max=160 y.min=0.20 y.max=1.00
+
+# =============================================================
+# ELECTRODES
+# =============================================================
+electrode name=anode region=3
+electrode name=anode region=5
+electrode name=cathode bottom
+
+# =============================================================
+# DOPING (PHYSICS FIX: Restored Gain Layer Dose)
+# =============================================================
+doping region=10 n.type uniform concentration=1.5e14
+doping region=11 n.type gaussian concentration=5e19 y.char=1.40 peak=55.20
+doping region=12 n.type uniform concentration=1e20
+
+# FIX: Increased N-Gain to 3.0e17 to ensure 3.5 MV/cm peak field for Avalanche
+doping region=20 n.type gaussian concentration=3.0e17 y.char=0.60 peak=2.00
+
+# FIX: Tightened P++ y.char so it doesn't overcompensate and destroy the gain layer
+doping region=21 p.type gaussian concentration=1e19 y.char=0.10 peak=0.70
+
+doping region=30 p.type uniform concentration=1.25e17
+doping region=31 p.type uniform concentration=1.25e17
+
+# =============================================================
+# INTERFACE (PRISTINE ONSEMI TARGET)
+# =============================================================
+interface s.i qf=1e11 s.n=10 s.p=10
+
+# =============================================================
+# CONTACTS (Ideal Ohmic)
+# =============================================================
+contact name=anode 
+contact name=cathode 
+
+# =============================================================
+# MATERIAL & MOBILITY
+# =============================================================
+material material='4H-SiC' \
+    eg300=3.25 egalpha=9.06e-4 egbeta=2.03e3 \
+    affinity=3.13 nc300=1.66e19 nv300=3.3e19 \
+    permittivity=9.7 ni.min=1e-20 \
+    mun0=947 mup0=124 tmun=1.5 tmup=1.5 \
+    vsatn=2.2e7 vsatp=1.0e7 \
+    taun0=1e-6 taup0=1e-6 \
+    augn=5e-29 augp=9.9e-32
+
+material material='SiO2' permittivity=3.9
+
+mobility material='4H-SiC' \
+    mu2p.caug=124 ncritp.caug=1.76e19 \
+    alphap.caug=0 deltap.caug=0.34 gammap.caug=0 \
+    mu2n.caug=947 ncritn.caug=1.94e17 \
+    alphan.caug=0 deltan.caug=0.61 gamman.caug=0
+
+# =============================================================
+# STAGE 1: LIGHTWEIGHT INITIALIZATION
+# =============================================================
+models material='4H-SiC' consrh auger analytic fldmob bgn.lindefelt
+
+method newton trap maxtraps=15 itlimit=100 dvmax=20.0 \
+    norm.scaling.local weak=1 climit=1e-4 \
+    px.tol=1e-6 cx.tol=1e-6 pr.tol=1e-12 cr.tol=1e-12
+
+solve init
+
+# =============================================================
+# STAGE 2: HEAVY PHYSICS (TRAP & IMPACT ON)
+# =============================================================
+models material='4H-SiC' \
+    fermidirac ni.fermi \
+    incomplete inc.two_level \
+    bgn.lindefelt \
+    consrh auger \
+    analytic fldmob \
+    trap.tunnel \
+    impact
+
+impact material='4H-SiC' aniso sic4h0001 e.side gradqfl e.min=1e5
+trap material="4H-SiC" acceptor density=1e12 energy.level=0.63 degeneracy.factor=12 sign=1e-14 sigp=1e-14 tat.trap
+
+solve previous
+save outfile=lgad_eq.str
+
+# =============================================================
+# STAGE 3: SPEED-OPTIMIZED SWEEP
+# =============================================================
+log outfile=lgad_iv_full.log
+
+solve vcathode=0.1 previous
+solve vcathode=1 vstep=1 vfinal=10 name=cathode previous
+
+# Approach the depletion snap (Fast)
+solve vstep=10 vfinal=200 name=cathode previous
+
+# BABY STEPS across the punch-through to prevent crashing
+method newton trap maxtraps=20 itlimit=150 dvmax=2.0 \
+    norm.scaling.local weak=1 climit=1e-4 \
+    px.tol=1e-6 cx.tol=1e-6 pr.tol=1e-10 cr.tol=1e-10
+
+solve vstep=1.0 vfinal=250 name=cathode previous
+solve vstep=5.0 vfinal=300 name=cathode previous 
+
+# =============================================================
+# STAGE 4: AVALANCHE SWEEP 
+# =============================================================
+# Restore FAST dvmax so the 25V jumps solve immediately
+method newton trap maxtraps=15 itlimit=100 dvmax=30.0 \
+    norm.scaling.local weak=1 climit=1e-4 \
+    px.tol=1e-6 cx.tol=1e-6 pr.tol=1e-10 cr.tol=1e-10
+
+solve vstep=25 vfinal=1000 name=cathode previous compliance=1e-4 cname=cathode
+
+# TIGHTEN SOLVER right as we approach breakdown to trace the vertical snap
+method newton trap maxtraps=20 itlimit=150 dvmax=5.0 \
+    norm.scaling.local weak=1 climit=1e-4 \
+    px.tol=1e-6 cx.tol=1e-6 pr.tol=1e-12 cr.tol=1e-12
+
+solve vstep=10 vfinal=1400 name=cathode previous compliance=1e-4 cname=cathode
+solve vstep=2 vfinal=1800 name=cathode previous compliance=1e-4 cname=cathode
+
+log off
+save outfile=lgad_bd.str
+
+# =============================================================
+# EXTRACTION
+# =============================================================
+extract init infile="lgad_iv_full.log"
+extract name="Vbd" x.val from curve(v."cathode", abs(i."anode")) where y.val=1e-5
+extract name="IV_curve" curve(v."cathode", abs(i."anode")) outfile="iv_final_12hour.dat"
+
+quit

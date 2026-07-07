@@ -1,0 +1,179 @@
+# ============================================================
+# SICAR 4H-SiC LGAD  |  DECK 1 of 4  |  GEOMETRY & MESH
+# FULL SYMMETRIC STRUCTURE (-24 to +24 um)
+# ============================================================
+
+go victorydevice simflags="-160 -P 20"
+
+# ============================================================
+# 1. MESH
+# ============================================================
+mesh space.mult=1.0
+
+# ---- X mesh: -24.0 .. 24.0 um ----
+x.mesh location=-24.0    spacing=1.0
+x.mesh location=-20.59   spacing=0.1
+x.mesh location=-15.0    spacing=0.15
+x.mesh location=-10.0    spacing=0.1
+x.mesh location=-4.0     spacing=0.1
+x.mesh location=0.0      spacing=0.5
+x.mesh location=4.0      spacing=0.1
+x.mesh location=10.0     spacing=0.1
+x.mesh location=15.0     spacing=0.15
+x.mesh location=20.59    spacing=0.1
+x.mesh location=24.0     spacing=1.0
+
+# ---- Y mesh: -0.5..71.3 um ----
+y.mesh location=-0.5   spacing=0.1
+y.mesh location=0.0    spacing=0.01
+y.mesh location=0.3    spacing=0.01
+y.mesh location=1.3    spacing=0.01
+y.mesh location=3.0    spacing=0.1
+y.mesh location=10.0   spacing=0.5
+y.mesh location=30.0   spacing=1.0
+y.mesh location=51.3   spacing=0.2
+y.mesh location=56.3   spacing=0.2
+y.mesh location=71.3   spacing=1.0
+
+# ============================================================
+# 2. REGIONS
+# ============================================================
+region num=1 material=AIR
+
+# ---- SiO2 PASSIVATION (Shoulders covering 4.0 to 10.0) ----
+region num=2 material=SiO2 x.min=-10.0 x.max=-4.0 y.min=-0.5 y.max=0.0
+region num=3 material=SiO2 x.min=4.0   x.max=10.0 y.min=-0.5 y.max=0.0
+
+# ---- RIGHT BEVEL (10 Steps) ----
+region num=4  material="4H-SiC" x.min=10.000 x.max=11.059 y.min=0.065 y.max=0.300
+region num=5  material="4H-SiC" x.min=10.000 x.max=11.059 y.min=0.300 y.max=1.300
+region num=6  material=SiO2     x.min=10.000 x.max=11.059 y.min=-0.5  y.max=0.065
+
+region num=7  material="4H-SiC" x.min=11.059 x.max=12.118 y.min=0.195 y.max=0.300
+region num=8  material="4H-SiC" x.min=11.059 x.max=12.118 y.min=0.300 y.max=1.300
+region num=9  material=SiO2     x.min=11.059 x.max=12.118 y.min=-0.5  y.max=0.195
+
+region num=10 material="4H-SiC" x.min=12.118 x.max=13.177 y.min=0.325 y.max=1.300
+region num=11 material=SiO2     x.min=12.118 x.max=13.177 y.min=-0.5  y.max=0.325
+
+region num=12 material="4H-SiC" x.min=13.177 x.max=14.236 y.min=0.455 y.max=1.300
+region num=13 material=SiO2     x.min=13.177 x.max=14.236 y.min=-0.5  y.max=0.455
+
+region num=14 material="4H-SiC" x.min=14.236 x.max=15.295 y.min=0.585 y.max=1.300
+region num=15 material=SiO2     x.min=14.236 x.max=15.295 y.min=-0.5  y.max=0.585
+
+region num=16 material="4H-SiC" x.min=15.295 x.max=16.354 y.min=0.715 y.max=1.300
+region num=17 material=SiO2     x.min=15.295 x.max=16.354 y.min=-0.5  y.max=0.715
+
+region num=18 material="4H-SiC" x.min=16.354 x.max=17.413 y.min=0.845 y.max=1.300
+region num=19 material=SiO2     x.min=16.354 x.max=17.413 y.min=-0.5  y.max=0.845
+
+region num=20 material="4H-SiC" x.min=17.413 x.max=18.472 y.min=0.975 y.max=1.300
+region num=21 material=SiO2     x.min=17.413 x.max=18.472 y.min=-0.5  y.max=0.975
+
+region num=22 material="4H-SiC" x.min=18.472 x.max=19.531 y.min=1.105 y.max=1.300
+region num=23 material=SiO2     x.min=18.472 x.max=19.531 y.min=-0.5  y.max=1.105
+
+region num=24 material="4H-SiC" x.min=19.531 x.max=20.590 y.min=1.235 y.max=1.300
+region num=25 material=SiO2     x.min=19.531 x.max=20.590 y.min=-0.5  y.max=1.235
+
+# ---- FLAT EPI CAPPED WITH SiO2 (Right: 20.59 to 24.0) ----
+region num=26 material=SiO2     x.min=20.590 x.max=24.000 y.min=0.8   y.max=1.3
+
+# ---- LEFT BEVEL (10 Steps, fully mirrored) ----
+region num=40 material="4H-SiC" x.min=-11.059 x.max=-10.000 y.min=0.065 y.max=0.300
+region num=41 material="4H-SiC" x.min=-11.059 x.max=-10.000 y.min=0.300 y.max=1.300
+region num=42 material=SiO2     x.min=-11.059 x.max=-10.000 y.min=-0.5  y.max=0.065
+
+region num=43 material="4H-SiC" x.min=-12.118 x.max=-11.059 y.min=0.195 y.max=0.300
+region num=44 material="4H-SiC" x.min=-12.118 x.max=-11.059 y.min=0.300 y.max=1.300
+region num=45 material=SiO2     x.min=-12.118 x.max=-11.059 y.min=-0.5  y.max=0.195
+
+region num=46 material="4H-SiC" x.min=-13.177 x.max=-12.118 y.min=0.325 y.max=1.300
+region num=47 material=SiO2     x.min=-13.177 x.max=-12.118 y.min=-0.5  y.max=0.325
+
+region num=48 material="4H-SiC" x.min=-14.236 x.max=-13.177 y.min=0.455 y.max=1.300
+region num=49 material=SiO2     x.min=-14.236 x.max=-13.177 y.min=-0.5  y.max=0.455
+
+region num=50 material="4H-SiC" x.min=-15.295 x.max=-14.236 y.min=0.585 y.max=1.300
+region num=51 material=SiO2     x.min=-15.295 x.max=-14.236 y.min=-0.5  y.max=0.585
+
+region num=52 material="4H-SiC" x.min=-16.354 x.max=-15.295 y.min=0.715 y.max=1.300
+region num=53 material=SiO2     x.min=-16.354 x.max=-15.295 y.min=-0.5  y.max=0.715
+
+region num=54 material="4H-SiC" x.min=-17.413 x.max=-16.354 y.min=0.845 y.max=1.300
+region num=55 material=SiO2     x.min=-17.413 x.max=-16.354 y.min=-0.5  y.max=0.845
+
+region num=56 material="4H-SiC" x.min=-18.472 x.max=-17.413 y.min=0.975 y.max=1.300
+region num=57 material=SiO2     x.min=-18.472 x.max=-17.413 y.min=-0.5  y.max=0.975
+
+region num=58 material="4H-SiC" x.min=-19.531 x.max=-18.472 y.min=1.105 y.max=1.300
+region num=59 material=SiO2     x.min=-19.531 x.max=-18.472 y.min=-0.5  y.max=1.105
+
+region num=60 material="4H-SiC" x.min=-20.590 x.max=-19.531 y.min=1.235 y.max=1.300
+region num=61 material=SiO2     x.min=-20.590 x.max=-19.531 y.min=-0.5  y.max=1.235
+
+# ---- FLAT EPI CAPPED WITH SiO2 (Left: -24.0 to -20.59) ----
+region num=62 material=SiO2     x.min=-24.000 x.max=-20.590 y.min=0.8   y.max=1.3
+
+# ---- 4H-SiC ACTIVE LAYERS (unetched, central mesa) ----
+region num=70 material="4H-SiC" x.min=-10.0 x.max=10.0 y.min=0.0 y.max=0.3
+region num=71 material="4H-SiC" x.min=-10.0 x.max=10.0 y.min=0.3 y.max=1.3
+
+# ---- Bulk stack (spans full -24 to 24 width) ----
+region num=80 material="4H-SiC" x.min=-24.0 x.max=24.0 y.min=1.3  y.max=51.3
+region num=81 material="4H-SiC" x.min=-24.0 x.max=24.0 y.min=51.3 y.max=56.3
+region num=82 material="4H-SiC" x.min=-24.0 x.max=24.0 y.min=56.3 y.max=71.3
+
+# ============================================================
+# 3. ELECTRODES & CONTACTS
+# ============================================================
+electrode name=anode   x.min=-4.0  x.max=4.0  y.min=0.0  y.max=0.0
+electrode name=cathode x.min=-24.0 x.max=24.0 y.min=71.3 y.max=71.3
+
+contact name=anode   workfunction=5.05 con.resist=1.8e-5
+contact name=cathode workfunction=4.70 con.resist=1.8e-5 resistance=1e5
+
+# ============================================================
+# 4. DOPING
+# ============================================================
+doping material="4H-SiC" p.type uniform concentration=5.0e19 y.min=0.0 y.max=0.3
+doping material="4H-SiC" n.type uniform concentration=8.6e16 y.min=0.3 y.max=1.3
+
+doping region=80 n.type uniform concentration=3.8e14
+doping region=81 n.type uniform concentration=1.0e18
+doping region=82 n.type uniform concentration=1.0e19
+
+# ============================================================
+# INTERFACE PARAMETERS (SiO2 / SiC Boundaries)
+# ============================================================
+# qf  = Fixed oxide charge (cm^-2)
+# s.n = Electron surface recombination velocity (cm/s)
+# s.p = Hole surface recombination velocity (cm/s)
+interface s.i qf=1e11 s.n=5e3 s.p=5e3
+
+# ============================================================
+# 5. MATERIAL PARAMETERS (4H-SiC)
+# ============================================================
+material material="4H-SiC" eg300=3.26 ni.min=1e-20 permittivity=9.7
+
+material material="4H-SiC" inc.two_level \
+        ed.hexagonal=0.0709 ed.cubic=0.1237 \
+        ea.hexagonal=0.220  ea.cubic=0.220  \
+        alpha.incomplete=0.5 gcb=2.0 gvb=4.0
+
+mobility material="4H-SiC" analytic.n analytic.p \
+         mu1n.caug=40.0  mu2n.caug=950.0  ncritn.caug=2.0e17  deltan.caug=0.76 \
+         mu1p.caug=15.9  mu2p.caug=124.0  ncritp.caug=1.76e19 deltap.caug=0.34 \
+         betan.caug=-2.4 betap.caug=-2.6 \
+         vsatn=2.0e7 vsatp=8.0e6
+
+# ============================================================
+# 6. SAVE THE STRUCTURE
+# ============================================================
+models material="4H-SiC" fermidirac ni.fermi incomplete inc.two_level analytic consrh auger bgn.lindefelt fldmob print
+
+solve init
+save outfile=sicar_geometry.str
+
+quit
